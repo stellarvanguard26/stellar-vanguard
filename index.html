@@ -548,8 +548,11 @@ image.react { animation: react .45s ease-out; }
 /* ---------------- phones: one A4 page at a time ---------------- */
 @media (max-width: 760px) {
   .desk { padding: 14px 12px 6px; }
-  .book { width: min(100%, calc((100dvh - 150px) / 1.4142), 560px); }
-  .spread { grid-template-columns: 1fr; aspect-ratio: 1 / 1.4142; perspective: 1800px; }
+  /* one page per scene (picture on top, words below), as tall as the screen allows */
+  .book { width: min(100%, 560px); }
+  .spread { grid-template-columns: 1fr; aspect-ratio: auto; height: max(calc(100dvh - 215px), 440px); perspective: 1800px; }
+  .page.mode-both { padding: 4% 5% 7%; }
+  .mode-both .pg-text { margin-top: 3cqw; }
   .book.closed .spread, html[dir="rtl"] .book.closed .spread { transform: none; }
   #slotA { display: none; }
   .gutter, .ribbon, .slot::after { display: none; }
@@ -6010,7 +6013,7 @@ window.SCENES = [];
   /* every scene fills a whole spread: its picture (to play with) on one page, its words on the facing page.
      A view is { i: scene, m: 'art' | 'text' | 'both' }; null is the inside of the cover (contents). */
   const V = (i, m) => ({ i, m });
-  // phones show one page at a time, so a scene with a lot of words gets two words pages there (split where the words balance)
+  // (an older phone layout used this to give a scene with a lot of words two words pages)
   const weightOf = (i, n) => { const l = STORY[i].lines[n]; return (STORY[i].say || {})[n] ? 0 : Math.ceil(l[1].length / 48) + 0.55; };
   function splitOf(i) {
     const len = STORY[i].lines.length, w = Array.from({ length: len }, (_, n) => weightOf(i, n)), total = w.reduce((a, b) => a + b, 0);
@@ -6021,7 +6024,8 @@ window.SCENES = [];
   }
   // the very last page lists the sources the facts came from (a sticker each; tap one to see its citation). It has no scene, so it is drawn like the endpapers.
   const REFS = { m: 'refs', ref: true }, BACK = { m: 'back' };
-  const SINGLES = [V(0, 'both'), ...Array.from({ length: N - 1 }, (_, j) => [V(j + 1, 'art'), ...splitOf(j + 1).map(([from, to]) => ({ i: j + 1, m: 'text', from, to }))]).flat(), REFS];
+  // phones: one page per scene, its picture on top and all its words underneath (the page fills the screen's height)
+  const SINGLES = [...Array.from({ length: N }, (_, i) => V(i, 'both')), REFS];
   // on a wide screen a scene with a lot of words shares them: the first lines go under the picture, the rest on the facing page
   function spreadSplit(i) {
     const len = STORY[i].lines.length, w = Array.from({ length: len }, (_, n) => weightOf(i, n)), total = w.reduce((a, b) => a + b, 0);
